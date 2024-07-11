@@ -4,7 +4,6 @@ This is a Voice-Enabled Map Application that allows users to interact with a map
 
 ## Table of Contents
 
-- [Demo](#demo)
 - [Features](#features)
 - [Technologies Used](#technologies-used)
 - [Installation](#installation)
@@ -13,10 +12,6 @@ This is a Voice-Enabled Map Application that allows users to interact with a map
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
-
-## Demo
-
-You can view a live demo of the application [here](https://your-live-demo-url).
 
 ## Features
 
