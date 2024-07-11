@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         recognition.onend = function () {
             console.log('Speech recognition service disconnected');
-            // Restart the recognition service
+           
             startVoiceSearch();
         };
     } else {
@@ -116,7 +116,7 @@ async function showWeatherOfLocation(location) {
 }
 
 async function showWeather(lat, lon) {
-    const apiKey = '4f6ba3987835b8631fae760151f32675'; // Replace with your OpenWeatherMap API key
+    const apiKey = '4f6ba3987835b8631fae760151f32675'; // OpenWeatherMap API key
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
 
     try {
@@ -134,7 +134,7 @@ async function showWeather(lat, lon) {
             throw new Error('Failed to parse JSON');
         }
 
-        console.log(data); // Log the data to understand its structure
+        console.log(data); 
 
         if (data.weather && data.weather[0] && data.main) {
             const weatherInfo = `Weather: ${data.weather[0].description}, Temperature: ${data.main.temp}°C`;
