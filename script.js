@@ -1,154 +1,137 @@
-let map;
-let recognition;
+// Initialize map
+var map = L.map('map').setView([20.5937, 78.9629], 5); // Centered on India
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialize the map
-    initializeMap();
+// Add OpenStreetMap tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
 
-    // Initialize the speech recognition
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
+// Web Speech Recognition
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = 'en-US';
+recognition.interimResults = false;
 
-        recognition.onresult = function (event) {
-            const result = event.results[0][0].transcript.toLowerCase();
-            console.log('Recognized result:', result);
-
-            handleVoiceCommand(result);
-        };
-
-        recognition.onerror = function (event) {
-            console.error('Speech recognition error', event);
-        };
-
-        recognition.onend = function () {
-            console.log('Speech recognition service disconnected');
-           
-            startVoiceSearch();
-        };
-    } else {
-        alert('Speech recognition not supported in this browser.');
+recognition.onresult = (event) => {
+    const command = event.results[0][0].transcript.toLowerCase();
+    console.log(`Recognized command: ${command}`);
+    if (command.includes('navigate to')) {
+        const location = command.replace('navigate to', '').trim();
+        navigateToLocation(location);
+    } else if (command.includes('show weather of')) {
+        const location = command.replace('show weather of', '').trim();
+        showWeather(location);
+    } else if (command.includes('zoom in')) {
+        map.zoomIn();
+    } else if (command.includes('zoom out')) {
+        map.zoomOut();
+    } else if (command.includes('move left')) {
+        moveMap('left');
+    } else if (command.includes('move right')) {
+        moveMap('right');
+    } else if (command.includes('show') && command.includes('near me')) {
+        const poi = command.replace('show', '').replace('near me', '').trim();
+        findNearby(poi);
     }
+};
+
+recognition.onend = () => {
+    console.log('Speech recognition service disconnected');
+};
+
+// Buttons to start and stop recognition
+document.getElementById('start').addEventListener('click', () => {
+    recognition.start();
+    console.log('Speech recognition service started');
 });
 
-function initializeMap() {
-    map = L.map('map').setView([51.505, -0.09], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-}
+document.getElementById('stop').addEventListener('click', () => {
+    recognition.stop();
+    console.log('Speech recognition service stopped');
+});
 
-async function startVoiceSearch() {
-    if (!recognition) {
-        console.error('Speech recognition is not initialized.');
-        return;
-    }
-
-    recognition.start();
-    console.log('Listening for voice commands...');
-
-    setTimeout(() => {
-        if (recognition) {
-            recognition.stop();
-            console.log('Stopped listening due to timeout.');
-        }
-    }, 30000); // Stop listening after 30 seconds
-}
-
-function handleVoiceCommand(command) {
-    if (command.startsWith('left to')) {
-        const destination = command.replace('left to ', '').trim();
-        if (destination) {
-            navigateTo(destination);
-        } else {
-            console.log('No destination provided.');
-        }
-    } else if (command.startsWith('show weather of')) {
-        const location = command.replace('show weather of ', '').trim();
-        if (location) {
-            showWeatherOfLocation(location);
-        } else {
-            console.log('No location provided.');
-        }
-    }
-}
-
-async function navigateTo(destination) {
-    if (!map) {
-        alert('Map is not initialized');
-        return;
-    }
-
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}`)
+// Geocoding and navigation function
+function navigateToLocation(location) {
+    console.log(`Navigating to: ${location}`);
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`)
         .then(response => response.json())
         .then(data => {
             if (data.length > 0) {
-                const { lat, lon } = data[0];
-                map.setView([lat, lon], 13);
-                L.marker([lat, lon]).addTo(map);
+                const latLng = [data[0].lat, data[0].lon];
+                map.setView(latLng, 13);
+                L.marker(latLng).addTo(map)
+                    .bindPopup(`<b>${location}</b>`)
+                    .openPopup();
             } else {
-                alert('Location not found');
+                alert('Location not found.');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Geocode was not successful.');
-        });
+        .catch(error => console.error('Error:', error));
 }
 
-async function showWeatherOfLocation(location) {
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`)
+// OpenWeatherMap API function
+function showWeather(location) {
+    console.log(`Fetching weather for: ${location}`);
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`)
         .then(response => response.json())
         .then(data => {
             if (data.length > 0) {
-                const { lat, lon } = data[0];
-                showWeather(lat, lon);
+                const lat = data[0].lat;
+                const lon = data[0].lon;
+                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4f6ba3987835b8631fae760151f32675&units=metric`)
+                    .then(response => response.json())
+                    .then(weatherData => {
+                        const weather = weatherData.weather[0].description;
+                        const temperature = weatherData.main.temp;
+                        alert(`Weather in ${location}: ${weather}, ${temperature}°C`);
+                    })
+                    .catch(error => console.error('Error:', error));
             } else {
-                alert('Location not found');
+                alert('Location not found.');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Geocode was not successful.');
-        });
+        .catch(error => console.error('Error:', error));
 }
 
-async function showWeather(lat, lon) {
-    const apiKey = '4f6ba3987835b8631fae760151f32675'; // OpenWeatherMap API key
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+// Move map
+function moveMap(direction) {
+    const offset = 0.1;
+    const center = map.getCenter();
+    let lat = center.lat;
+    let lng = center.lng;
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.error(`Network response was not ok. Status: ${response.status} - ${response.statusText}`);
-            throw new Error('Network response was not ok');
-        }
-
-        let data;
-        try {
-            data = await response.json();
-        } catch (jsonError) {
-            console.error('Error parsing JSON:', jsonError);
-            throw new Error('Failed to parse JSON');
-        }
-
-        console.log(data); 
-
-        if (data.weather && data.weather[0] && data.main) {
-            const weatherInfo = `Weather: ${data.weather[0].description}, Temperature: ${data.main.temp}°C`;
-            alert(weatherInfo);
-        } else {
-            throw new Error('Unexpected data structure from weather API');
-        }
-    } catch (error) {
-        console.error('Fetch error: ', error);
-        alert('Failed to fetch weather information.');
+    if (direction === 'left') {
+        lng -= offset;
+    } else if (direction === 'right') {
+        lng += offset;
     }
+    
+    map.setView([lat, lng], map.getZoom());
 }
 
-// Attach event listeners
-document.getElementById('voice-search').addEventListener('click', startVoiceSearch);
-document.getElementById('left-button').addEventListener('click', () => handleVoiceCommand('left'));
-document.getElementById('weather-button').addEventListener('click', () => handleVoiceCommand('weather'));
+// Find nearby points of interest within 5 km radius
+function findNearby(poi) {
+    navigator.geolocation.getCurrentPosition(position => {
+        const { latitude, longitude } = position.coords;
+        console.log(`Finding ${poi} near [${latitude}, ${longitude}]`);
+        const radius = 10000; // 10 km radius
+        const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];node["amenity"="${poi}"](around:${radius},${latitude},${longitude});out;`;
+
+        fetch(overpassUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.elements.length > 0) {
+                    data.elements.forEach(place => {
+                        const latLng = [place.lat, place.lon];
+                        L.marker(latLng).addTo(map)
+                            .bindPopup(`<b>${place.tags.name || poi}</b>`)
+                            .openPopup();
+                    });
+                } else {
+                    alert(`No ${poi} found within 10 km of your location.`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }, error => {
+        console.error('Geolocation error:', error);
+    });
+}
