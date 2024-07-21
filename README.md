@@ -8,7 +8,7 @@ This project is a voice-enabled map application that allows users to interact wi
 - **Show Weather of Location**: Say "show weather of [location]" to get the current weather of the specified location.
 - **Zoom In and Zoom Out**: Say "zoom in" or "zoom out" to adjust the map zoom level.
 - **Move Map**: Say "move left" or "move right" to pan the map.
-- **Find Nearby POIs**: Say "show [amenity] near me" to find nearby points of interest within a 5 km radius.
+- **Find Nearby POIs**: Say "show [amenity] near me" to find nearby points of interest within a 10 km radius.
 
 ## Common Amenities
 
