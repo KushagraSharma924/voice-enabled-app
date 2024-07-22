@@ -10,7 +10,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 recognition.lang = 'en-US';
 recognition.interimResults = false;
-
+alert('Example command:\nShow weather of delhi,\nNavigate to delhi,\nshow cafe near me')
 recognition.onresult = (event) => {
     const command = event.results[0][0].transcript.toLowerCase();
     console.log(`Recognized command: ${command}`);
@@ -35,7 +35,7 @@ recognition.onresult = (event) => {
 };
 
 recognition.onend = () => {
-    console.log('Speech recognition service disconnected');
+    recognition.start();
 };
 
 // Buttons to start and stop recognition
